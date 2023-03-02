@@ -1,0 +1,76 @@
+
+#include <MeOrion.h>
+#include <Arduino.h>
+
+
+int pinPeltierohrev = 3;
+int pinPeltierchlazeni = 9;
+int pinVentilator1 = 10;
+int pinVentilator2 = 11;
+
+
+Me7SegmentDisplay seg7_4(4);
+MeTemperature temperature_3_1(3, 1);
+MeRGBLed rgbled_7(7, 4);
+MeDCMotor motor_10(10);
+MeDCMotor motor_9(9);
+
+float number = 0;
+
+void setup() {
+  pinMode(pinPeltierohrev,OUTPUT);
+  pinMode(pinPeltierchlazeni,OUTPUT);
+  pinMode(pinVentilator1,OUTPUT);
+  pinMode(pinVentilator2,OUTPUT);
+
+  digitalWrite(pinPeltierohrev, LOW);
+  digitalWrite(pinPeltierchlazeni, LOW);
+  digitalWrite(pinVentilator1, LOW);
+  digitalWrite(pinVentilator2, HIGH);
+
+  Serial.begin(115200);
+  rgbled_7.fillPixelsBak(0, 2, 1);
+}
+
+void loop() {
+    if (Serial.available() > 0) {        
+        String incomingRequest = Serial.readStringUntil(';');
+        if(incomingRequest == "write"){
+            String temp=String(temperature_3_1.temperature())+"a";
+            Serial.print(temp);
+        }
+        else if (incomingRequest.indexOf("set") >= 0){
+           incomingRequest.remove(0, 4);
+           number = incomingRequest.toFloat();    
+        }
+    }
+
+
+  
+ 
+
+
+  seg7_4.display(number);
+  if(temperature_3_1.temperature() - 1 > number){
+    rgbled_7.setColor(0,  255,0,0);
+    rgbled_7.show();
+    digitalWrite(pinPeltierohrev, LOW);
+    digitalWrite(pinPeltierchlazeni, HIGH);
+  }
+  else if(temperature_3_1.temperature() + 1 < number){
+    rgbled_7.setColor(0,  0,0,255);
+    rgbled_7.show();
+    digitalWrite(pinPeltierohrev, HIGH);
+    digitalWrite(pinPeltierchlazeni, LOW);
+  }
+  else{
+    digitalWrite(pinPeltierohrev, LOW);
+    digitalWrite(pinPeltierchlazeni, LOW);
+    rgbled_7.setColor(0,  0,255,0);
+    rgbled_7.show();
+  }
+
+
+
+  
+}
